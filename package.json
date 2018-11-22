@@ -1,0 +1,33 @@
+{
+  "name": "Battleship",
+  "version": "0.0.0",
+  "description": "Battleship game",
+  "author": "CTMartin",
+  "private": true,
+  "scripts": {
+    "dev": "cross-env NODE_ENV=development nodemon server/app.js --watch server",
+    "start": "cross-env NODE_ENV=production node server/app.js",
+    "lint": "eslint ./server --fix --ext .js, --ignore-path .gitignore",
+    "precommit": "npm run test",
+    "pretest": "npm run lint",
+    "test": "echo \"Tests complete\""
+  },
+  "dependencies": {
+    "connect-redis": "^3.4.0",
+    "express": "^4.15.3",
+    "express-session": "^1.15.6",
+    "redis": "^2.8.0",
+    "socket.io": "^2.1.1",
+    "socket.io-redis": "^5.2.0"
+  },
+  "devDependencies": {
+    "babel-eslint": "^8.2.1",
+    "cross-env": "^5.0.1",
+    "eslint": "^5.6.0",
+    "eslint-config-airbnb": "^17.1.0",
+    "eslint-loader": "^2.0.0",
+    "eslint-plugin-import": "^2.14.0",
+    "eslint-plugin-vue": "^4.0.0",
+    "nodemon": "^1.11.0"
+  }
+}
