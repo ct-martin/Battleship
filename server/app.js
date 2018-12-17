@@ -288,7 +288,7 @@ io.on('connection', (socket) => {
                 return cb2(-1);
               }
               redisClient.rpush(`shotsOf.${sessionid}`, cell);
-              redisClient.set(`gameState.${gameId}`, 'MOVE.P2');
+              redisClient.set(`gameState.${gameId}`, 'MOVE.P1');
               console.log(`P2 MOVE: ${cell}`);
               redisClient.lindex(`shipsOf.${p1Sess}`, cell, (err6) => {
                 if (err6) {
