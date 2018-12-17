@@ -77,6 +77,11 @@ const game = {
         game.socket.on('bothPlayersReady', (pNo) => {
           console.log(`Game Starting You are Player ${pNo}`);
           game.playerNo = pNo;
+          if(pNo === "1") {
+            game.state = game.ENUM.STATE['GAME_MAKE_MOVE'];
+          } else {
+            game.state = game.ENUM.STATE['GAME_NOT_TURN'];
+          }
         });
         game.socket.on('shipsPlaced', (obj) => {
           const objson = JSON.parse(obj);
