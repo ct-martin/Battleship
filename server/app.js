@@ -155,7 +155,7 @@ io.on('connection', (socket) => {
               redisClient.lrange(`socketsOf.${sessionid}`, 0, -1, (err5, reply) => {
                 if (reply.length > 1) {
                   reply.forEach((s) => {
-                    io.to(s).emit('shipsPlaced', objson);
+                    io.to(s).emit('shipsPlaced', obj);
                   });
                 } else {
                   console.log(`No sockets found for '${p1Sess}'`);
@@ -167,7 +167,7 @@ io.on('connection', (socket) => {
                 redisClient.lrange(`socketsOf.${sessionid}`, 0, -1, (err6, reply) => {
                   if (reply.length > 1) {
                     reply.forEach((s) => {
-                      io.to(s).emit('shipsPlaced', objson);
+                      io.to(s).emit('shipsPlaced', obj);
                     });
                   } else {
                     console.log(`No sockets found for '${p1Sess}'`);
@@ -228,7 +228,7 @@ io.on('connection', (socket) => {
               return cb2(-1);
             }
             return redisClient.lindex(`shotsOf.${sessionid}`, cell, (err5) => {
-              if (err5) {
+              if (!err5) {
                 console.log('MakeShot: Player already made shot');
                 return cb2(-1);
               }
@@ -284,7 +284,8 @@ io.on('connection', (socket) => {
               return cb2(-1);
             }
             return redisClient.lindex(`shotsOf.${sessionid}`, cell, (err5) => {
-              if (err5) {
+              if (!err5) {
+                console.log('MakeShot: Player already made shot');
                 return cb2(-1);
               }
               redisClient.rpush(`shotsOf.${sessionid}`, cell);
