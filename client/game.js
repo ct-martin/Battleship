@@ -23,7 +23,8 @@ const game = {
       'GAME_PLACE_SHIPS': 40,           // allow the player to place their ships on the grid
       'GAME_MAKE_MOVE': 41,             // allow the player to select where to attack
       'GAME_NOT_TURN': 42,              // don't let the player do anything
-      'POSTGAME_WINLOSE': 50,           // tell if won or lost
+      'POSTGAME_WIN': 50,               // display won message
+      'POSTGAME_LOSE': 51,              // display won message
     })
   }),
   drawInfo: {
@@ -88,16 +89,29 @@ const game = {
           game.boards.ships = objson.ships;
         });
         game.socket.on('hit', (cell) => {
-          game.boards.hits.push(cell);
-          game.state = game.ENUM.STATE['GAME_NOT_TURN'];
+          if(!game.boards.hits.includes(cell)) {
+            game.boards.hits.push(cell);
+            game.state = game.ENUM.STATE['GAME_NOT_TURN'];
+          }
         });
         game.socket.on('miss', (cell) => {
-          game.boards.miss.push(cell);
-          game.state = game.ENUM.STATE['GAME_NOT_TURN'];
+          if(!game.boards.misses.includes(cell)) {
+            game.boards.misses.push(cell);
+            game.state = game.ENUM.STATE['GAME_NOT_TURN'];
+          }
         });
         game.socket.on('shotAgainst', (cell) => {
-          game.boards.shotsAgainst.push(cell);
-          game.state = game.ENUM.STATE['GAME_MAKE_MOVE'];
+          if(!game.boards.shotsAgainst.includes(cell)) {
+            game.boards.shotsAgainst.push(cell);
+            game.state = game.ENUM.STATE['GAME_MAKE_MOVE'];
+          }
+        });
+        game.socket.on('win', (pNo) => {
+          if(pNo === game.playerNo) {
+            game.state = game.ENUM.STATE['POSTGAME_WIN'];
+          } else {
+            game.state = game.ENUM.STATE['POSTGAME_LOSE'];
+          }
         });
         console.log(`Session ID: ${sessionid}`);
         game.state = game.ENUM.STATE['CONNECTING_SESSION_EXCHANGE'];
@@ -300,20 +314,12 @@ function draw() {
     case game.ENUM.STATE['PREGAME_TELL_PLAYER_NUM']:
       // display "you are player (1|2)"
       break;
-    case game.ENUM.STATE['GAME_PLACE_SHIPS']:
-      // allow the player to place their ships on the grid
+    case game.ENUM.STATE['GAME_PLACE_SHIPS']: // allow the player to place their ships on the grid
+    case game.ENUM.STATE['GAME_MAKE_MOVE']:   // allow the player to select where to attack
+    case game.ENUM.STATE['GAME_NOT_TURN']:    // don't let the player do anything
+    case game.ENUM.STATE['POSTGAME_WIN']:     // tell player won
+    case game.ENUM.STATE['POSTGAME_LOSE']:    // tell player lost
       drawBoardGrid();
-      break;
-    case game.ENUM.STATE['GAME_MAKE_MOVE']:
-      // allow the player to select where to attack
-      drawBoardGrid();
-      break;
-    case game.ENUM.STATE['GAME_NOT_TURN']:
-      // don't let the player do anything
-      drawBoardGrid();
-      break;
-    case game.ENUM.STATE['POSTGAME_WINLOSE']:
-      // tell if won or lost
       break;
     default:
       // "Oops!" screen?
@@ -352,8 +358,13 @@ const configureDiplay = (setting) => {
           } else {
             game.state = game.ENUM.STATE['GAME_NOT_TURN'];
           }
-        } else if(states.state === 'FINISHED') {
-          game.state = game.ENUM.STATE['POSTGAME_WINLOSE'];
+        } else if(states.state.startsWith('WIN.')) {
+          if((states.state === 'WIN.P1' && game.playerNo === '1') ||
+            (states.state === 'WIN.P2' && game.playerNo === '2')) {
+            game.state = game.ENUM.STATE['POSTGAME_WIN'];
+          } else {
+            game.state = game.ENUM.STATE['POSTGAME_LOSE'];
+          }
         } else {
           console.log(`Unknown state: ${states.state}`);
         }
@@ -402,7 +413,17 @@ const drawSubmitCell = () => {
   const isMouseHovering = inBounds(mouseXLocal, mouseYLocal, 0, 0, game.drawInfo.cellSize, game.drawInfo.cellSize);
   const mouseWasClicked = game.drawInfo.mouseWasClicked;
 
-  if(game.displaySetting === game.ENUM.DISPLAY_SETTING['DUALTOUCH_BOTTOM']) {
+  if(game.state === game.ENUM.STATE['POSTGAME_WIN']) {
+    fill(120, 50, 60);
+    textAlign(CENTER, CENTER);
+    textSize(Math.round(game.drawInfo.cellSize - (game.drawInfo.cellPadding * 2.0)));
+    text('W', (game.drawInfo.cellSize / 2.0), (game.drawInfo.cellSize / 2.0));
+  } else if(game.state === game.ENUM.STATE['POSTGAME_LOSE']) {
+    fill(0, 60, 50);
+    textAlign(CENTER, CENTER);
+    textSize(Math.round(game.drawInfo.cellSize - (game.drawInfo.cellPadding * 2.0)));
+    text('L', (game.drawInfo.cellSize / 2.0), (game.drawInfo.cellSize / 2.0));
+  } else if(game.displaySetting === game.ENUM.DISPLAY_SETTING['DUALTOUCH_BOTTOM']) {
     if(game.state === game.ENUM.STATE['GAME_PLACE_SHIPS']) {
       if(isMouseHovering) {
         fill(120, 40, 80);

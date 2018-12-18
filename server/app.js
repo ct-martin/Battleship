@@ -227,16 +227,16 @@ io.on('connection', (socket) => {
               console.log(`MakeShot: Invalid cell ${cell}`);
               return cb2(-1);
             }
-            return redisClient.lindex(`shotsOf.${sessionid}`, cell, (err5) => {
-              if (!err5) {
-                console.log('MakeShot: Player already made shot');
+            return redisClient.lindex(`shotsOf.${sessionid}`, cell, (err5, reply0) => {
+              if (Number.isInteger(reply0)) {
+                console.log('MakeShot: Player already made this shot');
                 return cb2(-1);
               }
               redisClient.rpush(`shotsOf.${sessionid}`, cell);
               redisClient.set(`gameState.${gameId}`, 'MOVE.P2');
               console.log(`P1 MOVE: ${cell}`);
-              redisClient.lindex(`shipsOf.${p2Sess}`, cell, (err6) => {
-                if (err6) {
+              redisClient.lrange(`shipsOf.${p2Sess}`, 0, -1, (err6, reply1) => {
+                if (reply1.includes(cell)) {
                   redisClient.lrange(`socketsOf.${p1Sess}`, 0, -1, (err8, reply) => {
                     if (reply.length > 1) {
                       reply.forEach((s) => {
@@ -244,6 +244,30 @@ io.on('connection', (socket) => {
                       });
                     } else {
                       console.log(`No sockets found for '${p1Sess}'`);
+                    }
+                  });
+
+                  redisClient.lrange(`shotsOf.${sessionid}`, 0, -1, (err9, reply2) => {
+                    if(reply2.filter(c => reply1.includes(c)).length === 17) {
+                      redisClient.set(`gameState.${gameId}`, 'WIN.P1');
+                      redisClient.lrange(`socketsOf.${p1Sess}`, 0, -1, (err10, reply3) => {
+                        if (reply3.length > 1) {
+                          reply3.forEach((s) => {
+                            io.to(s).emit('win', "1");
+                          });
+                        } else {
+                          console.log(`No sockets found for '${p1Sess}'`);
+                        }
+                      });
+                      redisClient.lrange(`socketsOf.${p2Sess}`, 0, -1, (err10, reply3) => {
+                        if (reply3.length > 1) {
+                          reply3.forEach((s) => {
+                            io.to(s).emit('win', "1");
+                          });
+                        } else {
+                          console.log(`No sockets found for '${p2Sess}'`);
+                        }
+                      });
                     }
                   });
                 } else {
@@ -283,16 +307,16 @@ io.on('connection', (socket) => {
               console.log(`MakeShot: Err: Invalid cell ${cell}`);
               return cb2(-1);
             }
-            return redisClient.lindex(`shotsOf.${sessionid}`, cell, (err5) => {
-              if (!err5) {
+            return redisClient.lindex(`shotsOf.${sessionid}`, cell, (err5, reply0) => {
+              if (Number.isInteger(reply0)) {
                 console.log('MakeShot: Player already made shot');
                 return cb2(-1);
               }
               redisClient.rpush(`shotsOf.${sessionid}`, cell);
               redisClient.set(`gameState.${gameId}`, 'MOVE.P1');
               console.log(`P2 MOVE: ${cell}`);
-              redisClient.lindex(`shipsOf.${p1Sess}`, cell, (err6) => {
-                if (err6) {
+              redisClient.lrange(`shipsOf.${p1Sess}`, 0, -1, (err6, reply1) => {
+                if (reply1.includes(cell)) {
                   redisClient.lrange(`socketsOf.${p2Sess}`, 0, -1, (err8, reply) => {
                     if (reply.length > 1) {
                       reply.forEach((s) => {
@@ -300,6 +324,30 @@ io.on('connection', (socket) => {
                       });
                     } else {
                       console.log(`No sockets found for '${p2Sess}'`);
+                    }
+                  });
+
+                  redisClient.lrange(`shotsOf.${sessionid}`, 0, -1, (err9, reply2) => {
+                    if(reply2.filter(c => reply1.includes(c)).length === 17) {
+                      redisClient.set(`gameState.${gameId}`, 'WIN.P2');
+                      redisClient.lrange(`socketsOf.${p1Sess}`, 0, -1, (err10, reply3) => {
+                        if (reply3.length > 1) {
+                          reply3.forEach((s) => {
+                            io.to(s).emit('win', "2");
+                          });
+                        } else {
+                          console.log(`No sockets found for '${p1Sess}'`);
+                        }
+                      });
+                      redisClient.lrange(`socketsOf.${p2Sess}`, 0, -1, (err10, reply3) => {
+                        if (reply3.length > 1) {
+                          reply3.forEach((s) => {
+                            io.to(s).emit('win', "2");
+                          });
+                        } else {
+                          console.log(`No sockets found for '${p1Sess}'`);
+                        }
+                      });
                     }
                   });
                 } else {
