@@ -42,6 +42,16 @@ app.use(session({
   },
 }));
 
+app.get('/newSession', (req, res) => {
+  req.session.regenerate((err) => {
+    console.log(`Error regenerating session: ${err}`);
+    res.send(500);
+  });
+  res.send(200);
+});
+app.get('/getSession', (req, res) => {
+  res.send(`${req.session.id}`);
+});
 app.use(express.static(path.resolve(`${__dirname}/../client`)));
 
 io.adapter(redisAdapter(redisURL));

@@ -1,5 +1,9 @@
 {
   "extends": "airbnb/base",
+  "env": {
+    "node": true,
+    "es6": true
+  },
   "rules": {
     "no-underscore-dangle" : "off",
     "no-plusplus": "off"
