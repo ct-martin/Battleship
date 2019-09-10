@@ -221,7 +221,7 @@ const configureDiplay = (setting) => {
 const inBounds = (x, y, x1, y1, x2, y2) => (x >= x1) && (x <= x2) && (y >= y1) && (y <= y2);
 
 const Buttons = (buttons) => {
-  const [mouseWasClicked] = game.drawInfo;
+  const { mouseWasClicked } = game.drawInfo;
   const mouseXLocal = mouseX - game.drawInfo.offset.x;
   const mouseYLocal = mouseY - game.drawInfo.offset.y;
   buttons.forEach((opt) => {
@@ -262,7 +262,7 @@ const drawSubmitCell = () => {
     game.drawInfo.cellSize,
     game.drawInfo.cellSize,
   );
-  const [mouseWasClicked] = game.drawInfo;
+  const { mouseWasClicked } = game.drawInfo;
 
   if (game.state === game.ENUM.STATE.POSTGAME_WIN) {
     fill(120, 50, 60);
@@ -336,7 +336,7 @@ const drawBoardCell = (row, col) => {
     game.drawInfo.cellSize,
     game.drawInfo.cellSize,
   );
-  const [mouseWasClicked] = game.drawInfo;
+  const { mouseWasClicked } = game.drawInfo;
 
   const cellCanonical = `${ROW_HEADERS[row]}${col}`;
 
@@ -450,7 +450,7 @@ const drawBoardGrid = () => {
 };
 
 function draw() {
-  const [mouseWasClicked] = game.drawInfo;
+  const { mouseWasClicked } = game.drawInfo;
 
   background(240, 30, 10);
 
