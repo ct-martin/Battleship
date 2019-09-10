@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import * as socket from './socket';
+import socket from './socket';
 
 const express = require('express');
 const path = require('path');
