@@ -1,6 +1,4 @@
 /* eslint-disable no-console */
-import socket from './socket';
-
 const express = require('express');
 const path = require('path');
 // const url = require('url');
@@ -12,6 +10,8 @@ const RedisStore = require('connect-redis')(session);
 const io = require('socket.io')(http);
 const redisAdapter = require('socket.io-redis');
 const redis = require('redis');
+
+const socketServer = require('./socket');
 
 const port = process.env.PORT || process.env.NODE_PORT || 3000;
 const redisURL = process.env.REDISCLOUD_URL || process.env.REDIS_URL || 'redis://localhost:6379';
@@ -55,6 +55,6 @@ app.get('/getSession', (req, res) => {
 app.use(express.static(path.resolve(`${__dirname}/../client`)));
 
 io.adapter(redisAdapter(redisURL));
-socket(io, redisClient);
+socketServer(io, redisClient);
 
 http.listen(port, () => console.log(`Listening on port ${port}`));
