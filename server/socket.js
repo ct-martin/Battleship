@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-module.export = (io, redisClient) => {
+module.exports = (io, redisClient) => {
   io.on('connection', (socket) => {
     const data = {
       session: undefined,
