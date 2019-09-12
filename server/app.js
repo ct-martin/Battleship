@@ -44,10 +44,12 @@ app.use(session({
 
 app.get('/newSession', (req, res) => {
   req.session.regenerate((err) => {
-    console.log(`Error regenerating session: ${err}`);
-    res.send(500);
+    if (err) {
+      res.status(500).send(`Error regenerating session: ${err}`);
+    } else {
+      res.status(200).send(req.session.id);
+    }
   });
-  res.send(200);
 });
 app.get('/getSession', (req, res) => {
   res.send(`${req.session.id}`);
