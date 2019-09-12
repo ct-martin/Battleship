@@ -67,12 +67,12 @@ const game = {
             console.log(`Session ID: ${text}`);
             game.socket.emit('session', `${text}`, () => {
               console.log('Session ID-ed with server');
-              game.state = game.ENUM.STATE.ASK_JOINHOST;
+              game.state = game.ENUM.STATE.PAIR_PICK_DISPLAY;
             });
           });
         game.socket.on('pairJoined', () => {
           console.log('Pair Joined');
-          game.state = game.ENUM.STATE.PAIR_PICK_DISPLAY;
+          game.state = game.ENUM.STATE.ASK_JOINHOST;
         });
         game.socket.on('gameJoinAssert', (gameId) => {
           game.gameId = gameId;
