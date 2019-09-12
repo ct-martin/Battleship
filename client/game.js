@@ -59,67 +59,69 @@ const game = {
     game.socket.on('connect', () => {
       if (game.socket.connected) {
         console.log('Connected');
-        game.state = game.ENUM.STATE.CONNECTING_SESSION_EXCHANGE;
-
         fetch('/getSession')
           .then(response => response.text())
-          .then((text) => {
-            console.log(`Session ID: ${text}`);
-            game.socket.emit('session', `${text}`, () => {
+          .then((sessionid) => {
+            console.log(`Session ID: ${sessionid}`);
+            game.state = game.ENUM.STATE.CONNECTING_SESSION_EXCHANGE;
+
+            game.socket.emit('session', `${sessionid}`, (ack) => {
               console.log('Session ID-ed with server');
+              game.state = game.ENUM.STATE.ASK_JOINHOST;
+            });
+            game.socket.on('pairJoined', () => {
+              console.log('Pair Joined');
               game.state = game.ENUM.STATE.PAIR_PICK_DISPLAY;
             });
+            game.socket.on('gameJoinAssert', (gameId) => {
+              game.gameId = gameId;
+            });
+            game.socket.on('otherPlayerJoined', () => {
+              console.log('Other Player Joined');
+              // game.state = game.ENUM.STATE['PREGAME_WAIT'];
+              game.state = game.ENUM.STATE.GAME_PLACE_SHIPS;
+            });
+            game.socket.on('bothPlayersReady', (pNo) => {
+              console.log(`Game Starting You are Player ${pNo}`);
+              game.playerNo = pNo;
+              if (pNo === '1') {
+                game.state = game.ENUM.STATE.GAME_MAKE_MOVE;
+              } else {
+                game.state = game.ENUM.STATE.GAME_NOT_TURN;
+              }
+            });
+            game.socket.on('shipsPlaced', (obj) => {
+              const objson = JSON.parse(obj);
+              game.boards.ships = objson.ships;
+            });
+            game.socket.on('hit', (cell) => {
+              if (!game.boards.hits.includes(cell)) {
+                game.boards.hits.push(cell);
+                game.state = game.ENUM.STATE.GAME_NOT_TURN;
+              }
+            });
+            game.socket.on('miss', (cell) => {
+              if (!game.boards.misses.includes(cell)) {
+                game.boards.misses.push(cell);
+                game.state = game.ENUM.STATE.GAME_NOT_TURN;
+              }
+            });
+            game.socket.on('shotAgainst', (cell) => {
+              if (!game.boards.shotsAgainst.includes(cell)) {
+                game.boards.shotsAgainst.push(cell);
+                game.state = game.ENUM.STATE.GAME_MAKE_MOVE;
+              }
+            });
+            game.socket.on('win', (pNo) => {
+              if (pNo === game.playerNo) {
+                game.state = game.ENUM.STATE.POSTGAME_WIN;
+              } else {
+                game.state = game.ENUM.STATE.POSTGAME_LOSE;
+              }
+            });
+          }).catch((err) => {
+            console.log(`Error getting session: ${err}`);
           });
-        game.socket.on('pairJoined', () => {
-          console.log('Pair Joined');
-          game.state = game.ENUM.STATE.ASK_JOINHOST;
-        });
-        game.socket.on('gameJoinAssert', (gameId) => {
-          game.gameId = gameId;
-        });
-        game.socket.on('otherPlayerJoined', () => {
-          console.log('Other Player Joined');
-          // game.state = game.ENUM.STATE['PREGAME_WAIT'];
-          game.state = game.ENUM.STATE.GAME_PLACE_SHIPS;
-        });
-        game.socket.on('bothPlayersReady', (pNo) => {
-          console.log(`Game Starting You are Player ${pNo}`);
-          game.playerNo = pNo;
-          if (pNo === '1') {
-            game.state = game.ENUM.STATE.GAME_MAKE_MOVE;
-          } else {
-            game.state = game.ENUM.STATE.GAME_NOT_TURN;
-          }
-        });
-        game.socket.on('shipsPlaced', (obj) => {
-          const objson = JSON.parse(obj);
-          game.boards.ships = objson.ships;
-        });
-        game.socket.on('hit', (cell) => {
-          if (!game.boards.hits.includes(cell)) {
-            game.boards.hits.push(cell);
-            game.state = game.ENUM.STATE.GAME_NOT_TURN;
-          }
-        });
-        game.socket.on('miss', (cell) => {
-          if (!game.boards.misses.includes(cell)) {
-            game.boards.misses.push(cell);
-            game.state = game.ENUM.STATE.GAME_NOT_TURN;
-          }
-        });
-        game.socket.on('shotAgainst', (cell) => {
-          if (!game.boards.shotsAgainst.includes(cell)) {
-            game.boards.shotsAgainst.push(cell);
-            game.state = game.ENUM.STATE.GAME_MAKE_MOVE;
-          }
-        });
-        game.socket.on('win', (pNo) => {
-          if (pNo === game.playerNo) {
-            game.state = game.ENUM.STATE.POSTGAME_WIN;
-          } else {
-            game.state = game.ENUM.STATE.POSTGAME_LOSE;
-          }
-        });
       } else {
         console.log('Connection failed');
       }
