@@ -50,6 +50,7 @@ const game = {
   playerNo: undefined,
   gameId: undefined,
 
+  // Sets up socket connection
   init: () => {
     console.log('Init; Connecting...');
     game.displayPos = game.ENUM.DISPLAY_SETTING.UNKNOWN;
@@ -129,6 +130,7 @@ const game = {
   },
 };
 
+// Sets up canvas info
 const redrawBase = () => {
   resizeCanvas(windowWidth, windowHeight, false);
 
@@ -150,11 +152,13 @@ const redrawBase = () => {
   loop();
 };
 
+// Processing's init function; calls game init
 function preload() {
   console.log('Loaded');
   game.init();
 }
 
+// Creates canvas & does initial draw
 function setup() {
   console.log('Setting up');
 
@@ -168,14 +172,17 @@ function setup() {
   redrawBase();
 }
 
+// Event listener
 function windowResized() {
   redrawBase();
 }
 
+// Event listener
 function mouseClicked() {
   game.drawInfo.mouseWasClicked = true;
 }
 
+// Sets up settings for what to draw for the user
 const configureDiplay = (setting) => {
   console.log(`Display is of type ${setting}`);
   game.displaySetting = setting;
@@ -219,9 +226,10 @@ const configureDiplay = (setting) => {
   });
 };
 
-
+// Helper function for checking click position relative to button
 const inBounds = (x, y, x1, y1, x2, y2) => (x >= x1) && (x <= x2) && (y >= y1) && (y <= y2);
 
+// Generic button class
 const Buttons = (buttons) => {
   const { mouseWasClicked } = game.drawInfo;
   const mouseXLocal = mouseX - game.drawInfo.offset.x;
@@ -253,6 +261,7 @@ const Buttons = (buttons) => {
   });
 };
 
+// Draws top-left cell, which is currently used for submitting data
 const drawSubmitCell = () => {
   const mouseXLocal = mouseX - game.drawInfo.offset.x;
   const mouseYLocal = mouseY - game.drawInfo.offset.y;
@@ -316,6 +325,7 @@ const drawSubmitCell = () => {
   }
 };
 
+// Draws row and column label cells
 const drawHeaderCell = (char) => {
   // asserted to be at cell location
   fill(240, 10, 90);
@@ -324,6 +334,7 @@ const drawHeaderCell = (char) => {
   text(char, (game.drawInfo.cellSize / 2.0), (game.drawInfo.cellSize / 2.0));
 };
 
+// Draws game board cells (most of grid)
 const drawBoardCell = (row, col) => {
   const ROW_HEADERS = 'ABCDEFGHIJ';
 
@@ -417,6 +428,8 @@ const drawBoardCell = (row, col) => {
     }
   }
 };
+
+// Main call for grid drawing
 const drawBoardGrid = () => {
   const ROW_HEADERS = 'ABCDEFGHIJ';
 
@@ -451,6 +464,7 @@ const drawBoardGrid = () => {
   }
 };
 
+// Redraw function
 function draw() {
   const { mouseWasClicked } = game.drawInfo;
 
@@ -558,6 +572,7 @@ function draw() {
           y2: (game.drawInfo.cellSize * 10.0),
           action: () => {
             // TODO: move to ASK_JOIN_GAME and without window.prompt
+            // eslint-disable-next-line no-alert
             const gameId = window.prompt('Game ID to join:', '');
             game.socket.emit('joingame', `${gameId}`, (ack) => {
               if (ack === -1) {
@@ -614,5 +629,6 @@ function draw() {
   }
   pop();
 
+  // reset event listener trick
   if (mouseWasClicked) game.drawInfo.mouseWasClicked = false;
 }

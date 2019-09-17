@@ -1,15 +1,20 @@
 /* eslint-disable no-console */
 module.exports = (io, redisClient) => {
+  // New connection
   io.on('connection', (socket) => {
     const data = {
       session: undefined,
     };
     console.log('User: Connect');
+
+    // Closed connection
     socket.on('disconnect', () => {
       console.log('User: Disconnect');
       redisClient.del(`sessionOf.${socket.id}`);
       redisClient.lrem(`socketsOf.${data.session}`, 1, socket.id);
     });
+
+    // User will ID itself with this call
     socket.on('session', (sessionid, cb) => {
       data.session = sessionid;
       redisClient.set(`sessionOf.${socket.id}`, sessionid);
@@ -22,6 +27,8 @@ module.exports = (io, redisClient) => {
           });
         }
       });
+
+      // Checks if in game and should switch to that screen
       socket.on('ingame', cb2 => redisClient.exists(`gameOf.${sessionid}`, (err, inGame) => {
         if (inGame === 1) {
           return redisClient.get(`gameOf.${sessionid}`, (err2, gameId) => {
@@ -31,6 +38,8 @@ module.exports = (io, redisClient) => {
         }
         return cb2(-1);
       }));
+
+      // Client has started a new game
       socket.on('newgame', (cb2) => {
         redisClient.incr('gameNum', (err, gameId) => {
           console.log(`'${data.session}' has started game '${gameId}'`);
@@ -39,6 +48,8 @@ module.exports = (io, redisClient) => {
           return cb2(gameId);
         });
       });
+
+      // Client is joining an existing game
       socket.on('joingame', (gameId, cb2) => {
         if (gameId === 'undefined') {
           console.log(`'${data.session}' tried to join with invalid game id`);
@@ -77,6 +88,9 @@ module.exports = (io, redisClient) => {
           });
         });
       });
+
+      // Client has placed ships
+      // Validates & checks if both players are ready to start
       socket.on('placeships', (obj, cb2) => redisClient.get(`gameOf.${sessionid}`, (err2, gameId) => {
         if (err2) {
           return cb2(-1);
@@ -162,6 +176,9 @@ module.exports = (io, redisClient) => {
           return cb2(-1);
         });
       }));
+
+      // Player has fired a shot
+      // Check if is that player's turn, hit/miss
       socket.on('makeshot', (cell, cb2) => redisClient.get(`gameOf.${sessionid}`, (err2, gameId) => {
         if (err2) {
           console.log('MakeShot: Err getting game');
@@ -337,6 +354,8 @@ module.exports = (io, redisClient) => {
           return cb2(-1);
         })));
       }));
+
+      // Client has requested data (e.g. reconnect)
       socket.on('getallstates', (cb2) => {
         const states = {
           playerNo: '',
