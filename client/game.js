@@ -82,20 +82,18 @@ const game = {
       // If already in game, re-pair with server & carry on
       game.socket.emit('session', `${sessionid}`, (ack) => {
         console.log('Session ID-ed with server');
-        game.registerEvents();
         game.ready();
       });
     } else if (window.location.hash.length > 1) {
       // If has hash to indicate session, use it
-      let sess = window.location.hash;
-      if (sess.charAt(0) === '#') {
-        sess = sess.substr(1);
-      }
+      game.session = window.location.hash.charAt(0) === '#'
+        ? window.location.hash.substr(1)
+        : window.location.hash;
 
-      console.log(`Session ID (from hash): ${sess}`);
+      console.log(`Session ID (from hash): ${game.session}`);
       game.state = game.ENUM.STATE.CONNECTING_SESSION_EXCHANGE;
 
-      game.socket.emit('session', `${sess}`, (ack) => {
+      game.socket.emit('session', `${game.session}`, (ack) => {
         console.log('Session ID-ed with server');
         game.state = game.ENUM.STATE.PAIR_PICK_DISPLAY;
         game.registerEvents();
@@ -105,10 +103,11 @@ const game = {
       fetch('/getSession')
         .then(response => response.text())
         .then((sessionid) => {
-          console.log(`Session ID: ${sessionid}`);
+          game.session = sessionid;
+          console.log(`Session ID: ${game.session}`);
           game.state = game.ENUM.STATE.CONNECTING_SESSION_EXCHANGE;
 
-          game.socket.emit('session', `${sessionid}`, (ack) => {
+          game.socket.emit('session', `${game.session}`, (ack) => {
             console.log('Session ID-ed with server');
             game.state = game.ENUM.STATE.PAIR_PICK_DISPLAY;
             game.registerEvents();
