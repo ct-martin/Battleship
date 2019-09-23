@@ -47,6 +47,7 @@ const game = {
   displaySetting: undefined,
   state: undefined,
   socket: undefined,
+  session: undefined,
   playerNo: undefined,
   gameId: undefined,
 
@@ -76,6 +77,67 @@ const game = {
           });
       } else {
         console.log('Connection failed');
+      }
+    });
+    game.socket.on('reconnect', () => {
+      if (game.socket.connected) {
+        console.log('Re-connect');
+        game.pair();
+      } else {
+        console.log('Connection failed');
+      }
+    });
+  },
+
+  pair: () => {
+    if (game.session) {
+      // If already in game, re-pair with server & carry on
+      game.socket.emit('session', `${sessionid}`, (ack) => {
+        console.log('Session ID-ed with server');
+        game.registerEvents();
+        game.ready();
+      });
+    } else if (window.location.hash.length > 2) {
+      // If has hash to indicate session, use it
+      const sess = window.location.hash.ltrim('#');
+
+      console.log(`Session ID (from hash): ${sess}`);
+      game.state = game.ENUM.STATE.CONNECTING_SESSION_EXCHANGE;
+
+      game.socket.emit('session', `${sess}`, (ack) => {
+        console.log('Session ID-ed with server');
+        game.state = game.ENUM.STATE.PAIR_PICK_DISPLAY;
+        game.registerEvents();
+      });
+    } else {
+      // Otherwise get server-generated hash & use that
+      fetch('/getSession')
+        .then(response => response.text())
+        .then((sessionid) => {
+          console.log(`Session ID: ${sessionid}`);
+          game.state = game.ENUM.STATE.CONNECTING_SESSION_EXCHANGE;
+
+          game.socket.emit('session', `${sessionid}`, (ack) => {
+            console.log('Session ID-ed with server');
+            game.state = game.ENUM.STATE.PAIR_PICK_DISPLAY;
+            game.registerEvents();
+          });
+        }).catch((err) => {
+          console.log(`Error getting session: ${err}`);
+        });
+    }
+  },
+
+  ready: () => {
+    game.socket.emit('ingame', (ack) => {
+      if (ack === -1) {
+        game.state = game.ENUM.STATE.ASK_JOINHOST;
+      } else {
+        console.log(`Rejoined game '${ack}'`);
+        game.gameId = ack;
+        // game.state = game.ENUM.STATE['PREGAME_WAIT'];
+        // TODO: This bypasses waiting for the other player; need to fix
+        game.loadState();
       }
     });
   },
@@ -226,17 +288,7 @@ const configureDiplay = (setting) => {
   console.log(`Display is of type ${setting}`);
   game.displaySetting = setting;
   // TODO: notify server
-  game.socket.emit('ingame', (ack) => {
-    if (ack === -1) {
-      game.state = game.ENUM.STATE.ASK_JOINHOST;
-    } else {
-      console.log(`Rejoined game '${ack}'`);
-      game.gameId = ack;
-      // game.state = game.ENUM.STATE['PREGAME_WAIT'];
-      // TODO: This bypasses waiting for the other player; need to fix
-      game.loadState();
-    }
-  });
+  game.ready();
 };
 
 // Helper function for checking click position relative to button
