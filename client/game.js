@@ -90,14 +90,14 @@ const game = {
   },
 
   pair: () => {
-    if (game.session) {
+    if (!!game.session) {
       // If already in game, re-pair with server & carry on
       game.socket.emit('session', `${sessionid}`, (ack) => {
         console.log('Session ID-ed with server');
         game.registerEvents();
         game.ready();
       });
-    } else if (window.location.hash.length > 2) {
+    } else if (window.location.hash.length > 1) {
       // If has hash to indicate session, use it
       const sess = window.location.hash.ltrim('#');
 
