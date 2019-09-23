@@ -1,3 +1,4 @@
+/* eslint-disable no-extra-boolean-cast */
 /* eslint-disable no-unused-vars */
 /* eslint-disable no-undef */
 /* eslint-disable no-console */
@@ -99,7 +100,10 @@ const game = {
       });
     } else if (window.location.hash.length > 1) {
       // If has hash to indicate session, use it
-      const sess = window.location.hash.ltrim('#');
+      let sess = window.location.hash;
+      if (sess.charAt(0) === '#') {
+        sess = sess.substr(1);
+      }
 
       console.log(`Session ID (from hash): ${sess}`);
       game.state = game.ENUM.STATE.CONNECTING_SESSION_EXCHANGE;
