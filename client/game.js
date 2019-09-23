@@ -62,20 +62,7 @@ const game = {
     game.socket.on('connect', () => {
       if (game.socket.connected) {
         console.log('Connected');
-        fetch('/getSession')
-          .then(response => response.text())
-          .then((sessionid) => {
-            console.log(`Session ID: ${sessionid}`);
-            game.state = game.ENUM.STATE.CONNECTING_SESSION_EXCHANGE;
-
-            game.socket.emit('session', `${sessionid}`, (ack) => {
-              console.log('Session ID-ed with server');
-              game.state = game.ENUM.STATE.PAIR_PICK_DISPLAY;
-              game.registerEvents();
-            });
-          }).catch((err) => {
-            console.log(`Error getting session: ${err}`);
-          });
+        game.pair();
       } else {
         console.log('Connection failed');
       }
@@ -85,7 +72,7 @@ const game = {
         console.log('Re-connect');
         game.pair();
       } else {
-        console.log('Connection failed');
+        console.log('Re-connection failed');
       }
     });
   },
