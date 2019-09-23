@@ -142,7 +142,7 @@ const game = {
       game.boards.hits = states.hits;
       game.boards.misses = states.misses;
       if (!states.state) {
-        game.state = game.ENUM.STATE.ASK_JOIN_GAME;
+        game.state = game.ENUM.STATE.HOST_GIVECODE;
       } else if (states.state === 'PLACE') {
         game.state = game.ENUM.STATE.GAME_PLACE_SHIPS;
       } else if (states.state.startsWith('MOVE.')) {
