@@ -458,20 +458,12 @@ const drawBoardCell = (row, col) => {
         console.log('Top screen -> bottom b/c firing');
         return;
       }
-      if (game.boards.ships.includes(cellCanonical)) {
-        fill(0, 0, 50);
-        ellipse(
-          game.drawInfo.cellSize / 2,
-          game.drawInfo.cellSize / 2,
-          game.drawInfo.cellSize / 2,
-        );
-        if (game.boards.shotsAgainst.includes(cellCanonical)) {
-          fill(0, 60, 50);
-          textAlign(CENTER, CENTER);
-          textSize(Math.round(game.drawInfo.cellSize - (game.drawInfo.cellPadding * 2.0)));
-          text('x', (game.drawInfo.cellSize / 2.0), (game.drawInfo.cellSize / 2.0));
-        }
-      } else if (game.boards.shotsAgainst.includes(cellCanonical)) {
+      if (game.boards.hits.includes(cellCanonical)) {
+        fill(0, 60, 50);
+        textAlign(CENTER, CENTER);
+        textSize(Math.round(game.drawInfo.cellSize - (game.drawInfo.cellPadding * 2.0)));
+        text('x', (game.drawInfo.cellSize / 2.0), (game.drawInfo.cellSize / 2.0));
+      } else if (game.boards.misses.includes(cellCanonical)) {
         fill(0, 40, 30);
         textAlign(CENTER, CENTER);
         textSize(Math.round(game.drawInfo.cellSize - (game.drawInfo.cellPadding * 2.0)));
@@ -481,7 +473,17 @@ const drawBoardCell = (row, col) => {
 
     // A screen with touch, where other does not have touch (switches based on context)
     case game.ENUM.DISPLAY_SETTING.PHONE:
-      if (game.state === game.state.GAME_MAKE_MOVE) {
+      if (
+        game.state === game.ENUM.STATE.GAME_PLACE_SHIPS
+        && mouseWasClicked
+        && isMouseHovering
+      ) {
+        if (game.boards.ships.includes(cellCanonical)) {
+          game.boards.ships.splice(game.boards.ships.indexOf(cellCanonical), 1);
+        } else {
+          game.boards.ships.push(cellCanonical);
+        }
+      } else if (game.state === game.state.GAME_MAKE_MOVE) {
         if (game.boards.hits.includes(cellCanonical)) {
           fill(0, 60, 50);
           textAlign(CENTER, CENTER);
@@ -502,18 +504,7 @@ const drawBoardCell = (row, col) => {
             });
           }
         }
-      } else if (
-        game.state === game.ENUM.STATE.GAME_PLACE_SHIPS
-        && mouseWasClicked
-        && isMouseHovering
-      ) {
-        if (game.boards.ships.includes(cellCanonical)) {
-          game.boards.ships.splice(game.boards.ships.indexOf(cellCanonical), 1);
-        } else {
-          game.boards.ships.push(cellCanonical);
-        }
-      }
-      if (game.boards.ships.includes(cellCanonical)) {
+      } else if (game.boards.ships.includes(cellCanonical)) {
         fill(0, 0, 50);
         ellipse(
           game.drawInfo.cellSize / 2,
