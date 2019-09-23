@@ -69,63 +69,97 @@ const game = {
             game.socket.emit('session', `${sessionid}`, (ack) => {
               console.log('Session ID-ed with server');
               game.state = game.ENUM.STATE.PAIR_PICK_DISPLAY;
-            });
-            game.socket.on('pairJoined', () => {
-              console.log('(Debug) Pair Joined');
-            });
-            game.socket.on('gameJoinAssert', (gameId) => {
-              game.gameId = gameId;
-            });
-            game.socket.on('otherPlayerJoined', () => {
-              console.log('Other Player Joined');
-              // game.state = game.ENUM.STATE['PREGAME_WAIT'];
-              game.state = game.ENUM.STATE.GAME_PLACE_SHIPS;
-            });
-            game.socket.on('bothPlayersReady', (pNo) => {
-              console.log(`Game Starting You are Player ${pNo}`);
-              game.playerNo = pNo;
-              if (pNo === '1') {
-                game.state = game.ENUM.STATE.GAME_MAKE_MOVE;
-              } else {
-                game.state = game.ENUM.STATE.GAME_NOT_TURN;
-              }
-            });
-
-            // Game board updating
-            game.socket.on('shipsPlaced', (obj) => {
-              const objson = JSON.parse(obj);
-              game.boards.ships = objson.ships;
-            });
-            game.socket.on('hit', (cell) => {
-              if (!game.boards.hits.includes(cell)) {
-                game.boards.hits.push(cell);
-                game.state = game.ENUM.STATE.GAME_NOT_TURN;
-              }
-            });
-            game.socket.on('miss', (cell) => {
-              if (!game.boards.misses.includes(cell)) {
-                game.boards.misses.push(cell);
-                game.state = game.ENUM.STATE.GAME_NOT_TURN;
-              }
-            });
-            game.socket.on('shotAgainst', (cell) => {
-              if (!game.boards.shotsAgainst.includes(cell)) {
-                game.boards.shotsAgainst.push(cell);
-                game.state = game.ENUM.STATE.GAME_MAKE_MOVE;
-              }
-            });
-            game.socket.on('win', (pNo) => {
-              if (pNo === game.playerNo) {
-                game.state = game.ENUM.STATE.POSTGAME_WIN;
-              } else {
-                game.state = game.ENUM.STATE.POSTGAME_LOSE;
-              }
+              game.registerEvents();
             });
           }).catch((err) => {
             console.log(`Error getting session: ${err}`);
           });
       } else {
         console.log('Connection failed');
+      }
+    });
+  },
+
+  loadState: () => {
+    game.socket.emit('getallstates', (obj) => {
+      const states = JSON.parse(obj);
+      game.playerNo = states.playerNo;
+      game.boards.ships = states.ships;
+      game.boards.shotsAgainst = states.shotsAgainst;
+      game.boards.hits = states.hits;
+      game.boards.misses = states.misses;
+      if (states.state === 'PLACE') {
+        game.state = game.ENUM.STATE.GAME_PLACE_SHIPS;
+      } else if (states.state.startsWith('MOVE.')) {
+        if ((states.state === 'MOVE.P1' && game.playerNo === '1')
+          || (states.state === 'MOVE.P2' && game.playerNo === '2')) {
+          game.state = game.ENUM.STATE.GAME_MAKE_MOVE;
+        } else {
+          game.state = game.ENUM.STATE.GAME_NOT_TURN;
+        }
+      } else if (states.state.startsWith('WIN.')) {
+        if ((states.state === 'WIN.P1' && game.playerNo === '1')
+          || (states.state === 'WIN.P2' && game.playerNo === '2')) {
+          game.state = game.ENUM.STATE.POSTGAME_WIN;
+        } else {
+          game.state = game.ENUM.STATE.POSTGAME_LOSE;
+        }
+      } else {
+        console.err(`Unknown state: ${states.state}`);
+      }
+    });
+  },
+
+  registerEvents: () => {
+    game.socket.on('pairJoined', () => {
+      console.log('(Debug) Pair Joined');
+    });
+    game.socket.on('gameJoinAssert', (gameId) => {
+      game.gameId = gameId;
+    });
+    game.socket.on('otherPlayerJoined', () => {
+      console.log('Other Player Joined');
+      // game.state = game.ENUM.STATE['PREGAME_WAIT'];
+      game.state = game.ENUM.STATE.GAME_PLACE_SHIPS;
+    });
+    game.socket.on('bothPlayersReady', (pNo) => {
+      console.log(`Game Starting You are Player ${pNo}`);
+      game.playerNo = pNo;
+      if (pNo === '1') {
+        game.state = game.ENUM.STATE.GAME_MAKE_MOVE;
+      } else {
+        game.state = game.ENUM.STATE.GAME_NOT_TURN;
+      }
+    });
+
+    // Game board updating
+    game.socket.on('shipsPlaced', (obj) => {
+      const objson = JSON.parse(obj);
+      game.boards.ships = objson.ships;
+    });
+    game.socket.on('hit', (cell) => {
+      if (!game.boards.hits.includes(cell)) {
+        game.boards.hits.push(cell);
+        game.state = game.ENUM.STATE.GAME_NOT_TURN;
+      }
+    });
+    game.socket.on('miss', (cell) => {
+      if (!game.boards.misses.includes(cell)) {
+        game.boards.misses.push(cell);
+        game.state = game.ENUM.STATE.GAME_NOT_TURN;
+      }
+    });
+    game.socket.on('shotAgainst', (cell) => {
+      if (!game.boards.shotsAgainst.includes(cell)) {
+        game.boards.shotsAgainst.push(cell);
+        game.state = game.ENUM.STATE.GAME_MAKE_MOVE;
+      }
+    });
+    game.socket.on('win', (pNo) => {
+      if (pNo === game.playerNo) {
+        game.state = game.ENUM.STATE.POSTGAME_WIN;
+      } else {
+        game.state = game.ENUM.STATE.POSTGAME_LOSE;
       }
     });
   },
@@ -196,33 +230,7 @@ const configureDiplay = (setting) => {
       game.gameId = ack;
       // game.state = game.ENUM.STATE['PREGAME_WAIT'];
       // TODO: This bypasses waiting for the other player; need to fix
-      game.socket.emit('getallstates', (obj) => {
-        const states = JSON.parse(obj);
-        game.playerNo = states.playerNo;
-        game.boards.ships = states.ships;
-        game.boards.shotsAgainst = states.shotsAgainst;
-        game.boards.hits = states.hits;
-        game.boards.misses = states.misses;
-        if (states.state === 'PLACE') {
-          game.state = game.ENUM.STATE.GAME_PLACE_SHIPS;
-        } else if (states.state.startsWith('MOVE.')) {
-          if ((states.state === 'MOVE.P1' && game.playerNo === '1')
-            || (states.state === 'MOVE.P2' && game.playerNo === '2')) {
-            game.state = game.ENUM.STATE.GAME_MAKE_MOVE;
-          } else {
-            game.state = game.ENUM.STATE.GAME_NOT_TURN;
-          }
-        } else if (states.state.startsWith('WIN.')) {
-          if ((states.state === 'WIN.P1' && game.playerNo === '1')
-            || (states.state === 'WIN.P2' && game.playerNo === '2')) {
-            game.state = game.ENUM.STATE.POSTGAME_WIN;
-          } else {
-            game.state = game.ENUM.STATE.POSTGAME_LOSE;
-          }
-        } else {
-          console.log(`Unknown state: ${states.state}`);
-        }
-      });
+      game.loadState();
     }
   });
 };
@@ -379,54 +387,134 @@ const drawBoardCell = (row, col) => {
     (game.drawInfo.cellSize - game.drawInfo.cellPadding),
   );
 
-  if (game.displaySetting === game.ENUM.DISPLAY_SETTING.DUALTOUCH_TOP) {
-    if (game.boards.hits.includes(cellCanonical)) {
-      fill(0, 60, 50);
-      textAlign(CENTER, CENTER);
-      textSize(Math.round(game.drawInfo.cellSize - (game.drawInfo.cellPadding * 2.0)));
-      text('x', (game.drawInfo.cellSize / 2.0), (game.drawInfo.cellSize / 2.0));
-    } else if (game.boards.misses.includes(cellCanonical)) {
-      fill(0, 40, 30);
-      textAlign(CENTER, CENTER);
-      textSize(Math.round(game.drawInfo.cellSize - (game.drawInfo.cellPadding * 2.0)));
-      text('o', (game.drawInfo.cellSize / 2.0), (game.drawInfo.cellSize / 2.0));
-    } else if (mouseWasClicked && isMouseHovering) {
-      // cell has not been clicked yet
-      if (game.state === game.ENUM.STATE.GAME_MAKE_MOVE) {
-        game.socket.emit('makeshot', cellCanonical, (err) => {
-          if (err === -1) {
-            console.log('Error making shot');
-          }
-        });
-      }
-    }
-  } else if (game.displaySetting === game.ENUM.DISPLAY_SETTING.DUALTOUCH_BOTTOM) {
-    if (game.state === game.ENUM.STATE.GAME_PLACE_SHIPS && mouseWasClicked && isMouseHovering) {
-      if (game.boards.ships.includes(cellCanonical)) {
-        game.boards.ships.splice(game.boards.ships.indexOf(cellCanonical), 1);
-      } else {
-        game.boards.ships.push(cellCanonical);
-      }
-    }
-    if (game.boards.ships.includes(cellCanonical)) {
-      fill(0, 0, 50);
-      ellipse(
-        game.drawInfo.cellSize / 2,
-        game.drawInfo.cellSize / 2,
-        game.drawInfo.cellSize / 2,
-      );
-      if (game.boards.shotsAgainst.includes(cellCanonical)) {
+  switch (game.displaySetting) {
+    // Top screen & both have touch
+    case game.ENUM.DISPLAY_SETTING.DUALTOUCH_TOP:
+      if (game.boards.hits.includes(cellCanonical)) {
         fill(0, 60, 50);
         textAlign(CENTER, CENTER);
         textSize(Math.round(game.drawInfo.cellSize - (game.drawInfo.cellPadding * 2.0)));
         text('x', (game.drawInfo.cellSize / 2.0), (game.drawInfo.cellSize / 2.0));
+      } else if (game.boards.misses.includes(cellCanonical)) {
+        fill(0, 40, 30);
+        textAlign(CENTER, CENTER);
+        textSize(Math.round(game.drawInfo.cellSize - (game.drawInfo.cellPadding * 2.0)));
+        text('o', (game.drawInfo.cellSize / 2.0), (game.drawInfo.cellSize / 2.0));
+      } else if (mouseWasClicked && isMouseHovering) {
+        // cell has not been clicked yet
+        if (game.state === game.ENUM.STATE.GAME_MAKE_MOVE) {
+          game.socket.emit('makeshot', cellCanonical, (err) => {
+            if (err === -1) {
+              console.log('Error making shot');
+            }
+          });
+        }
       }
-    } else if (game.boards.shotsAgainst.includes(cellCanonical)) {
-      fill(0, 40, 30);
-      textAlign(CENTER, CENTER);
-      textSize(Math.round(game.drawInfo.cellSize - (game.drawInfo.cellPadding * 2.0)));
-      text('o', (game.drawInfo.cellSize / 2.0), (game.drawInfo.cellSize / 2.0));
-    }
+      break;
+
+    // Bottom screen & both have touch
+    case game.ENUM.DISPLAY_SETTING.DUALTOUCH_BOTTOM:
+      if (game.state === game.ENUM.STATE.GAME_PLACE_SHIPS && mouseWasClicked && isMouseHovering) {
+        if (game.boards.ships.includes(cellCanonical)) {
+          game.boards.ships.splice(game.boards.ships.indexOf(cellCanonical), 1);
+        } else {
+          game.boards.ships.push(cellCanonical);
+        }
+      }
+      if (game.boards.ships.includes(cellCanonical)) {
+        fill(0, 0, 50);
+        ellipse(
+          game.drawInfo.cellSize / 2,
+          game.drawInfo.cellSize / 2,
+          game.drawInfo.cellSize / 2,
+        );
+        if (game.boards.shotsAgainst.includes(cellCanonical)) {
+          fill(0, 60, 50);
+          textAlign(CENTER, CENTER);
+          textSize(Math.round(game.drawInfo.cellSize - (game.drawInfo.cellPadding * 2.0)));
+          text('x', (game.drawInfo.cellSize / 2.0), (game.drawInfo.cellSize / 2.0));
+        }
+      } else if (game.boards.shotsAgainst.includes(cellCanonical)) {
+        fill(0, 40, 30);
+        textAlign(CENTER, CENTER);
+        textSize(Math.round(game.drawInfo.cellSize - (game.drawInfo.cellPadding * 2.0)));
+        text('o', (game.drawInfo.cellSize / 2.0), (game.drawInfo.cellSize / 2.0));
+      }
+      break;
+
+    // A screen w/o touch
+    case game.ENUM.DISPLAY_SETTING.TVMONITOR:
+      if (game.state === game.state.GAME_MAKE_MOVE) {
+        console.log('Top screen -> bottom b/c firing');
+        return;
+      }
+      if (game.boards.ships.includes(cellCanonical)) {
+        fill(0, 0, 50);
+        ellipse(
+          game.drawInfo.cellSize / 2,
+          game.drawInfo.cellSize / 2,
+          game.drawInfo.cellSize / 2,
+        );
+        if (game.boards.shotsAgainst.includes(cellCanonical)) {
+          fill(0, 60, 50);
+          textAlign(CENTER, CENTER);
+          textSize(Math.round(game.drawInfo.cellSize - (game.drawInfo.cellPadding * 2.0)));
+          text('x', (game.drawInfo.cellSize / 2.0), (game.drawInfo.cellSize / 2.0));
+        }
+      } else if (game.boards.shotsAgainst.includes(cellCanonical)) {
+        fill(0, 40, 30);
+        textAlign(CENTER, CENTER);
+        textSize(Math.round(game.drawInfo.cellSize - (game.drawInfo.cellPadding * 2.0)));
+        text('o', (game.drawInfo.cellSize / 2.0), (game.drawInfo.cellSize / 2.0));
+      }
+      break;
+
+    // A screen with touch, where other does not have touch (switches based on context)
+    case game.ENUM.DISPLAY_SETTING.PHONE:
+      if (game.state === game.state.GAME_MAKE_MOVE) {
+        if (game.boards.hits.includes(cellCanonical)) {
+          fill(0, 60, 50);
+          textAlign(CENTER, CENTER);
+          textSize(Math.round(game.drawInfo.cellSize - (game.drawInfo.cellPadding * 2.0)));
+          text('x', (game.drawInfo.cellSize / 2.0), (game.drawInfo.cellSize / 2.0));
+        } else if (game.boards.misses.includes(cellCanonical)) {
+          fill(0, 40, 30);
+          textAlign(CENTER, CENTER);
+          textSize(Math.round(game.drawInfo.cellSize - (game.drawInfo.cellPadding * 2.0)));
+          text('o', (game.drawInfo.cellSize / 2.0), (game.drawInfo.cellSize / 2.0));
+        } else if (mouseWasClicked && isMouseHovering) {
+          // cell has not been clicked yet
+          if (game.state === game.ENUM.STATE.GAME_MAKE_MOVE) {
+            game.socket.emit('makeshot', cellCanonical, (err) => {
+              if (err === -1) {
+                console.log('Error making shot');
+              }
+            });
+          }
+        }
+      } else if (game.boards.ships.includes(cellCanonical)) {
+        fill(0, 0, 50);
+        ellipse(
+          game.drawInfo.cellSize / 2,
+          game.drawInfo.cellSize / 2,
+          game.drawInfo.cellSize / 2,
+        );
+        if (game.boards.shotsAgainst.includes(cellCanonical)) {
+          fill(0, 60, 50);
+          textAlign(CENTER, CENTER);
+          textSize(Math.round(game.drawInfo.cellSize - (game.drawInfo.cellPadding * 2.0)));
+          text('x', (game.drawInfo.cellSize / 2.0), (game.drawInfo.cellSize / 2.0));
+        }
+      } else if (game.boards.shotsAgainst.includes(cellCanonical)) {
+        fill(0, 40, 30);
+        textAlign(CENTER, CENTER);
+        textSize(Math.round(game.drawInfo.cellSize - (game.drawInfo.cellPadding * 2.0)));
+        text('o', (game.drawInfo.cellSize / 2.0), (game.drawInfo.cellSize / 2.0));
+      }
+      break;
+
+    default:
+      console.err('UNKNOWN DISPlAY TYPE');
   }
 };
 
@@ -500,7 +588,7 @@ function draw() {
 
       Buttons([
         {
-          text: 'Dual-touch\n(top)',
+          text: 'Top\n(touch)',
           x1: (game.drawInfo.cellSize * 0.5),
           y1: (game.drawInfo.cellSize * 2.0),
           x2: (game.drawInfo.cellSize * 4.5),
@@ -508,29 +596,29 @@ function draw() {
           action: () => configureDiplay(game.ENUM.DISPLAY_SETTING.DUALTOUCH_TOP),
         },
         {
-          text: 'Dual-touch\n(bottom)',
+          text: 'Bottom\n(touch)',
           x1: (game.drawInfo.cellSize * 0.5),
           y1: (game.drawInfo.cellSize * 6.0),
           x2: (game.drawInfo.cellSize * 4.5),
           y2: (game.drawInfo.cellSize * 9.0),
           action: () => configureDiplay(game.ENUM.DISPLAY_SETTING.DUALTOUCH_BOTTOM),
         },
-        /* {
-          'text': 'TV/Monitor',
-          'x1': (game.drawInfo.cellSize * 6.5),
-          'y1': (game.drawInfo.cellSize * 2.0),
-          'x2': (game.drawInfo.cellSize * 10.5),
-          'y2': (game.drawInfo.cellSize * 5.0),
-          'action': () => configureDiplay(game.ENUM.DISPLAY_SETTING['TVMONITOR']),
+        {
+          text: 'Non-touch',
+          x1: (game.drawInfo.cellSize * 6.5),
+          y1: (game.drawInfo.cellSize * 2.0),
+          x2: (game.drawInfo.cellSize * 10.5),
+          y2: (game.drawInfo.cellSize * 5.0),
+          action: () => configureDiplay(game.ENUM.DISPLAY_SETTING.TVMONITOR),
         },
         {
-          'text': 'Phone',
-          'x1': (game.drawInfo.cellSize * 7.5),
-          'y1': (game.drawInfo.cellSize * 7.0),
-          'x2': (game.drawInfo.cellSize * 9.5),
-          'y2': (game.drawInfo.cellSize * 8.0),
-          'action': () => configureDiplay(game.ENUM.DISPLAY_SETTING['PHONE']),
-        }, */
+          text: 'Touch (switching)',
+          x1: (game.drawInfo.cellSize * 7.5),
+          y1: (game.drawInfo.cellSize * 7.0),
+          x2: (game.drawInfo.cellSize * 9.5),
+          y2: (game.drawInfo.cellSize * 8.0),
+          action: () => configureDiplay(game.ENUM.DISPLAY_SETTING.PHONE),
+        },
       ]);
 
       stroke(240, 40, 30);
