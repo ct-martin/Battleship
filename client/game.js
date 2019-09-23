@@ -80,7 +80,7 @@ const game = {
   pair: () => {
     if (!!game.session) {
       // If already in game, re-pair with server & carry on
-      game.socket.emit('session', `${sessionid}`, (ack) => {
+      game.socket.emit('session', `${game.session}`, (ack) => {
         console.log('Session ID-ed with server');
         game.ready();
       });
