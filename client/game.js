@@ -454,7 +454,7 @@ const drawBoardCell = (row, col) => {
 
     // A screen w/o touch
     case game.ENUM.DISPLAY_SETTING.TVMONITOR:
-      if (game.state === game.state.GAME_MAKE_MOVE) {
+      if (game.state === game.ENUM.STATE.GAME_MAKE_MOVE) {
         console.log('Top screen -> bottom b/c firing');
         return;
       }
@@ -483,7 +483,7 @@ const drawBoardCell = (row, col) => {
         } else {
           game.boards.ships.push(cellCanonical);
         }
-      } else if (game.state === game.state.GAME_MAKE_MOVE) {
+      } else if (game.state === game.ENUM.STATE.GAME_MAKE_MOVE) {
         if (game.boards.hits.includes(cellCanonical)) {
           fill(0, 60, 50);
           textAlign(CENTER, CENTER);
