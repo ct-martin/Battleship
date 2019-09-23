@@ -68,11 +68,10 @@ const game = {
 
             game.socket.emit('session', `${sessionid}`, (ack) => {
               console.log('Session ID-ed with server');
-              game.state = game.ENUM.STATE.ASK_JOINHOST;
+              game.state = game.ENUM.STATE.PAIR_PICK_DISPLAY;
             });
             game.socket.on('pairJoined', () => {
-              console.log('Pair Joined');
-              game.state = game.ENUM.STATE.PAIR_PICK_DISPLAY;
+              console.log('(Debug) Pair Joined');
             });
             game.socket.on('gameJoinAssert', (gameId) => {
               game.gameId = gameId;
@@ -91,6 +90,8 @@ const game = {
                 game.state = game.ENUM.STATE.GAME_NOT_TURN;
               }
             });
+
+            // Game board updating
             game.socket.on('shipsPlaced', (obj) => {
               const objson = JSON.parse(obj);
               game.boards.ships = objson.ships;
