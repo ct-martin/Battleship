@@ -91,15 +91,19 @@ const game = {
       if (states.state === 'PLACE') {
         game.state = game.ENUM.STATE.GAME_PLACE_SHIPS;
       } else if (states.state.startsWith('MOVE.')) {
-        if ((states.state === 'MOVE.P1' && game.playerNo === '1')
-          || (states.state === 'MOVE.P2' && game.playerNo === '2')) {
+        if (
+          (states.state === 'MOVE.P1' && game.playerNo === '1')
+          || (states.state === 'MOVE.P2' && game.playerNo === '2')
+        ) {
           game.state = game.ENUM.STATE.GAME_MAKE_MOVE;
         } else {
           game.state = game.ENUM.STATE.GAME_NOT_TURN;
         }
       } else if (states.state.startsWith('WIN.')) {
-        if ((states.state === 'WIN.P1' && game.playerNo === '1')
-          || (states.state === 'WIN.P2' && game.playerNo === '2')) {
+        if (
+          (states.state === 'WIN.P1' && game.playerNo === '1')
+          || (states.state === 'WIN.P2' && game.playerNo === '2')
+        ) {
           game.state = game.ENUM.STATE.POSTGAME_WIN;
         } else {
           game.state = game.ENUM.STATE.POSTGAME_LOSE;
@@ -294,7 +298,10 @@ const drawSubmitCell = () => {
     textAlign(CENTER, CENTER);
     textSize(Math.round(game.drawInfo.cellSize - (game.drawInfo.cellPadding * 2.0)));
     text('L', (game.drawInfo.cellSize / 2.0), (game.drawInfo.cellSize / 2.0));
-  } else if (game.displaySetting === game.ENUM.DISPLAY_SETTING.DUALTOUCH_BOTTOM) {
+  } else if (
+    game.displaySetting === game.ENUM.DISPLAY_SETTING.DUALTOUCH_BOTTOM
+    || game.displaySetting === game.ENUM.DISPLAY_SETTING.PHONE
+  ) {
     if (game.state === game.ENUM.STATE.GAME_PLACE_SHIPS) {
       if (isMouseHovering) {
         fill(120, 40, 80);
@@ -324,7 +331,10 @@ const drawSubmitCell = () => {
         });
       }
     }
-  } else if (game.displaySetting === game.ENUM.DISPLAY_SETTING.DUALTOUCH_TOP) {
+  } else if (
+    game.displaySetting === game.ENUM.DISPLAY_SETTING.DUALTOUCH_TOP
+    || game.displaySetting === game.ENUM.DISPLAY_SETTING.TVMONITOR
+  ) {
     if (game.state === game.ENUM.STATE.GAME_NOT_TURN) {
       fill(240, 40, 30);
       textAlign(CENTER, CENTER);
@@ -492,7 +502,18 @@ const drawBoardCell = (row, col) => {
             });
           }
         }
-      } else if (game.boards.ships.includes(cellCanonical)) {
+      } else if (
+        game.state === game.ENUM.STATE.GAME_PLACE_SHIPS
+        && mouseWasClicked
+        && isMouseHovering
+      ) {
+        if (game.boards.ships.includes(cellCanonical)) {
+          game.boards.ships.splice(game.boards.ships.indexOf(cellCanonical), 1);
+        } else {
+          game.boards.ships.push(cellCanonical);
+        }
+      }
+      if (game.boards.ships.includes(cellCanonical)) {
         fill(0, 0, 50);
         ellipse(
           game.drawInfo.cellSize / 2,
