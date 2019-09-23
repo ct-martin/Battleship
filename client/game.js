@@ -612,11 +612,11 @@ function draw() {
           action: () => configureDiplay(game.ENUM.DISPLAY_SETTING.TVMONITOR),
         },
         {
-          text: 'Touch (switching)',
-          x1: (game.drawInfo.cellSize * 7.5),
-          y1: (game.drawInfo.cellSize * 7.0),
-          x2: (game.drawInfo.cellSize * 9.5),
-          y2: (game.drawInfo.cellSize * 8.0),
+          text: 'Touch\n(switching)',
+          x1: (game.drawInfo.cellSize * 6.5),
+          y1: (game.drawInfo.cellSize * 6.0),
+          x2: (game.drawInfo.cellSize * 10.5),
+          y2: (game.drawInfo.cellSize * 9.0),
           action: () => configureDiplay(game.ENUM.DISPLAY_SETTING.PHONE),
         },
       ]);
