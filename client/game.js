@@ -499,10 +499,6 @@ const drawBoardCell = (row, col) => {
 
     // A screen w/o touch
     case game.ENUM.DISPLAY_SETTING.TVMONITOR:
-      if (game.state === game.ENUM.STATE.GAME_MAKE_MOVE) {
-        console.log('Top screen -> bottom b/c firing');
-        return;
-      }
       if (game.boards.hits.includes(cellCanonical)) {
         fill(0, 60, 50);
         textAlign(CENTER, CENTER);
